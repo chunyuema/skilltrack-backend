@@ -1,16 +1,14 @@
 from os import wait
 
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.db import models
 
 
 class Profile(models.Model):
     # Link to our custom user. If user is deleted, profile is deleted.
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="profile"
-    )
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
 
-    full_name = models.CharField(max_length=255)
     title = models.CharField(max_length=100)
     phone = models.CharField(max_length=20, blank=True)
     location = models.CharField(max_length=255)
@@ -25,3 +23,7 @@ class Profile(models.Model):
         if self.user:
             return f"Profile of {self.user.email}"
         return f"Profile (No User Assigned)"
+
+    @property
+    def full_name(self):
+        return f"{self.user.first_name} {self.user.last_name}".strip()
