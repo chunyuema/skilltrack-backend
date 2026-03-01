@@ -9,12 +9,12 @@ class Profile(models.Model):
     # Link to our custom user. If user is deleted, profile is deleted.
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
 
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=100, blank=True)
     phone = models.CharField(max_length=20, blank=True)
-    location = models.CharField(max_length=255)
+    location = models.CharField(max_length=255, blank=True)
     education = models.TextField(blank=True)
     visa_status = models.CharField(max_length=50, blank=True)
-    years_of_experience = models.IntegerField(default=0)
+    years_of_experience = models.IntegerField(null=True, blank=True)
     github_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
     bio = models.TextField(blank=True)
