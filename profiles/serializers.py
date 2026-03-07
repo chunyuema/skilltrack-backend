@@ -6,12 +6,18 @@ from .models import Profile
 class ProfileSerializer(serializers.ModelSerializer):
     # These are read-only because they come from the User model
     email = serializers.EmailField(source="user.email", read_only=True)
-    full_name = serializers.ReadOnlyField()
+    first_name = serializers.CharField(
+        source="user.first_name", required=False, allow_blank=True
+    )
+    last_name = serializers.CharField(
+        source="user.last_name", required=False, allow_blank=True
+    )
 
     class Meta:
         model = Profile
         fields = [
-            "full_name",
+            "first_name",
+            "last_name",
             "title",
             "email",
             "phone",
@@ -38,3 +44,23 @@ class ProfileSerializer(serializers.ModelSerializer):
                 "bio",
             ]
         }
+
+    def update(self, instance, validated_data):
+        # Extract user data from validated_data
+        # When using source="user.first_name", DRF puts it in validated_data['user']['first_name']
+        user_data = validated_data.pop("user", {})
+        first_name = user_data.get("first_name")
+        last_name = user_data.get("last_name")
+
+        # Update the User object associated with the Profile
+        user = instance.user
+        if first_name is not None:
+            user.first_name = first_name
+        if last_name is not None:
+            user.last_name = last_name
+
+        if first_name is not None or last_name is not None:
+            user.save()
+
+        # Update the Profile object with the remaining validated_data
+        return super().update(instance, validated_data)
