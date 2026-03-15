@@ -27,3 +27,23 @@ class Profile(models.Model):
     @property
     def full_name(self):
         return f"{self.user.first_name} {self.user.last_name}".strip()
+
+
+class Experience(models.Model):
+    profile = models.ForeignKey(
+        Profile, on_delete=models.CASCADE, related_name="experiences"
+    )
+    company = models.CharField(max_length=255)
+    role = models.CharField(max_length=255)
+    start_date = models.CharField(max_length=7)  # e.g., "2022-01"
+    end_date = models.CharField(
+        max_length=7, blank=True, null=True
+    )  # e.g., "2024-05" or null for "Present"
+    description = models.TextField()
+    technologies = models.JSONField(default=list)
+
+    class Meta:
+        ordering = ["-start_date"]
+
+    def __str__(self):
+        return f"{self.role} at {self.company}"

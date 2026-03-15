@@ -1,6 +1,26 @@
 from rest_framework import serializers
 
-from .models import Profile
+from .models import Experience, Profile
+
+
+class ExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Experience
+        fields = [
+            "id",
+            "company",
+            "role",
+            "start_date",
+            "end_date",
+            "description",
+            "technologies",
+        ]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        if not data["end_date"]:
+            data["end_date"] = "Present"
+        return data
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -12,6 +32,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     last_name = serializers.CharField(
         source="user.last_name", required=False, allow_blank=True
     )
+    experiences = ExperienceSerializer(many=True, read_only=True)
 
     class Meta:
         model = Profile
@@ -28,6 +49,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "github_url",
             "linkedin_url",
             "bio",
+            "experiences",
         ]
 
         # This ensures PATCH requests don't require these fields
