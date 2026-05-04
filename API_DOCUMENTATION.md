@@ -27,6 +27,21 @@ This document lists the available API endpoints for the SkillTrack backend.
 | `/api/v1/profiles/experiences/<id>/` | PUT/PATCH | Update a specific work experience. | Yes |
 | `/api/v1/profiles/experiences/<id>/` | DELETE | Delete a specific work experience. | Yes |
 
+## Skills Matrix
+
+| Endpoint | Method | Description | Auth Required |
+| :--- | :--- | :--- | :--- |
+| `/api/v1/profiles/skill-list/` | GET | Fetch the hierarchical skill tree with current user's levels. | Yes |
+| `/api/v1/profiles/skills/update/` | POST | Update a user's proficiency level for a specific skill. | Yes |
+
+### Skills Update Request Body
+```json
+{
+  "skill_id": "cpu-cache",
+  "level": 4
+}
+```
+
 ## System Administration
 
 | Endpoint | Method | Description | Auth Required |

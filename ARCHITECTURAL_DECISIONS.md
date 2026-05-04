@@ -27,3 +27,24 @@
 - **Reasoning:** 
     - Simpler for "YYYY-MM" formatting than standard DateFields.
     - Supports the "Present" logic more easily during serialization.
+
+## Skills Matrix Implementation
+
+### 1. Hierarchical Model Structure
+- **Decision:** Use a four-tier relational model: `SkillTheme` -> `SkillSubCategory` -> `Skill` <- `UserSkill` (junction with `Profile`).
+- **Reasoning:** 
+    - Normalization allows for easy addition of new global skills without redundant data.
+    - `UserSkill` isolates user-specific proficiency (level 0-5) from the global skill definition.
+    - Hierarchical nesting reflects the "Professional Portfolio" UI structure (Themes > Subcategories > Skills).
+
+### 2. Identifier Strategy
+- **Decision:** Use `CharField` (slugs/keys) as Primary Keys for Theme, SubCategory, and Skill.
+- **Reasoning:** 
+    - Enables stable mapping between frontend constants and backend database records.
+    - Prevents reliance on auto-incrementing integers which might drift between environments during early development.
+
+### 3. Contextual Serialization
+- **Decision:** Use a `SerializerMethodField` to inject the user's skill level into the global skill tree.
+- **Reasoning:** 
+    - Allows the frontend to fetch the entire matrix (including unlearned skills) in a single request.
+    - Provides a "Full Tree" view which is necessary for the Matrix UI to show empty slots.
