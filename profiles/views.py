@@ -33,17 +33,27 @@ class ExperienceViewSet(viewsets.ModelViewSet):
 
 
 class SkillListView(generics.ListAPIView):
+    """
+    Returns the full hierarchical skills matrix.
+    Injects the current user's profile into the serializer context
+    so that individual proficiency levels can be retrieved.
+    """
     queryset = SkillTheme.objects.all()
     serializer_class = SkillThemeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
+        # Pass the logged-in user's profile to the serializer
         context["profile"] = self.request.user.profile
         return context
 
 
 class UpdateUserSkillView(APIView):
+    """
+    Updates or creates a UserSkill record to track a specific 
+    user's proficiency level in a specific skill.
+    """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
@@ -57,6 +67,7 @@ class UpdateUserSkillView(APIView):
                 {"error": "Skill not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
+        # Update if it exists, otherwise create a new proficiency record
         user_skill, created = UserSkill.objects.update_or_create(
             profile=request.user.profile, skill=skill, defaults={"level": level}
         )
