@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from profiles.models import SkillTheme, SkillSubCategory, Skill
+from skills.models import SkillTheme, SkillSubCategory, Skill
 
 class Command(BaseCommand):
     help = 'Populates the initial skills matrix'

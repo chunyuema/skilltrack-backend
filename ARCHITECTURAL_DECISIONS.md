@@ -37,7 +37,14 @@
     - `UserSkill` isolates user-specific proficiency (level 0-5) from the global skill definition.
     - Hierarchical nesting reflects the "Professional Portfolio" UI structure (Themes > Subcategories > Skills).
 
-### 2. Identifier Strategy
+### 2. Separation of Concerns (Skills App)
+- **Decision:** Separate all skill-related models, views, and serializers into a dedicated `skills` Django app.
+- **Reasoning:** 
+    - Decouples professional identity (`profiles`) from the competency taxonomy (`skills`).
+    - Prepares the system for future features where skills might be used independently of profiles (e.g., Job Postings, Team Analytics).
+    - Makes the codebase more modular and easier to maintain as the number of technical domains grows.
+
+### 3. Identifier Strategy
 - **Decision:** Use `CharField` (slugs/keys) as Primary Keys for Theme, SubCategory, and Skill.
 - **Reasoning:** 
     - Enables stable mapping between frontend constants and backend database records.

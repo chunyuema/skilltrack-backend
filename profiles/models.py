@@ -1,6 +1,3 @@
-from os import wait
-
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -27,64 +24,6 @@ class Profile(models.Model):
     @property
     def full_name(self):
         return f"{self.user.first_name} {self.user.last_name}".strip()
-
-
-class SkillTheme(models.Model):
-    id = models.CharField(max_length=100, primary_key=True)
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    order = models.IntegerField(default=0)
-
-    class Meta:
-        ordering = ["order"]
-
-    def __str__(self):
-        return self.name
-
-
-class SkillSubCategory(models.Model):
-    id = models.CharField(max_length=100, primary_key=True)
-    theme = models.ForeignKey(
-        SkillTheme, on_delete=models.CASCADE, related_name="sub_categories"
-    )
-    name = models.CharField(max_length=100)
-    order = models.IntegerField(default=0)
-
-    class Meta:
-        ordering = ["order"]
-
-    def __str__(self):
-        return f"{self.theme.name} > {self.name}"
-
-
-class Skill(models.Model):
-    id = models.CharField(max_length=100, primary_key=True)
-    sub_category = models.ForeignKey(
-        SkillSubCategory, on_delete=models.CASCADE, related_name="skills"
-    )
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    order = models.IntegerField(default=0)
-
-    class Meta:
-        ordering = ["order"]
-
-    def __str__(self):
-        return self.name
-
-
-class UserSkill(models.Model):
-    profile = models.ForeignKey(
-        Profile, on_delete=models.CASCADE, related_name="skills"
-    )
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
-    level = models.IntegerField(default=0)
-
-    class Meta:
-        unique_together = ("profile", "skill")
-
-    def __str__(self):
-        return f"{self.profile.user.email} - {self.skill.name}: {self.level}"
 
 
 class Experience(models.Model):

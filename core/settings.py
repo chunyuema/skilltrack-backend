@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     # Apps relevant for the project
     "users",
     "profiles",
+    "skills",
 ]
 
 MIDDLEWARE = [
