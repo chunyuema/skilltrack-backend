@@ -23,4 +23,5 @@ class ExperienceViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # Automatically link the experience to the user's profile
+        # Profile is available since it's in the same app
         serializer.save(profile=self.request.user.profile)
