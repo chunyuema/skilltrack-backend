@@ -66,11 +66,11 @@ class UserSkill(models.Model):
     profile = models.ForeignKey(
         Profile, on_delete=models.CASCADE, related_name="skills"
     )
-    skill = models.ForeignKey(Skill, on_delete=models.CASCADE)
+    sub_category = models.ForeignKey(SkillSubCategory, on_delete=models.CASCADE)
     level = models.IntegerField(default=0)
 
     class Meta:
-        unique_together = ("profile", "skill")
+        unique_together = ("profile", "sub_category")
 
     def __str__(self):
-        return f"{self.profile.user.email} - {self.skill.name}: {self.level}"
+        return f"{self.profile.user.email} - {self.sub_category.name}: {self.level}"

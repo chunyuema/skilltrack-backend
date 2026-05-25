@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.db.models import Q
 
-from .models import Skill, SkillTheme, UserSkill, Track
+from .models import Skill, SkillTheme, UserSkill, Track, SkillSubCategory
 from .serializers import SkillThemeSerializer, TrackSerializer
 
 
@@ -54,27 +54,27 @@ class UpdateUserTracksView(APIView):
         
         return Response({"status": "success", "selected_tracks": [t.id for t in tracks]})
 
-
 class UpdateUserSkillView(APIView):
     """
     Updates or creates a UserSkill record to track a specific 
-    user's proficiency level in a specific skill.
+    user's proficiency level in a specific skill subcategory.
     """
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        skill_id = request.data.get("skill_id")
+        sub_category_id = request.data.get("sub_category_id")
         level = request.data.get("level")
 
         try:
-            skill = Skill.objects.get(id=skill_id)
-        except Skill.DoesNotExist:
+            sub_category = SkillSubCategory.objects.get(id=sub_category_id)
+        except SkillSubCategory.DoesNotExist:
             return Response(
-                {"error": "Skill not found"}, status=status.HTTP_404_NOT_FOUND
+                {"error": "SubCategory not found"}, status=status.HTTP_404_NOT_FOUND
             )
 
+        # Update if it exists, otherwise create a new proficiency record
         user_skill, created = UserSkill.objects.update_or_create(
-            profile=request.user.profile, skill=skill, defaults={"level": level}
+            profile=request.user.profile, sub_category=sub_category, defaults={"level": level}
         )
 
         return Response({"status": "success", "level": user_skill.level})
