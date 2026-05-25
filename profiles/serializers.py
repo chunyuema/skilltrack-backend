@@ -33,6 +33,9 @@ class ProfileSerializer(serializers.ModelSerializer):
         source="user.last_name", required=False, allow_blank=True
     )
     experiences = ExperienceSerializer(many=True, read_only=True)
+    selected_tracks = serializers.SlugRelatedField(
+        many=True, read_only=True, slug_field="id"
+    )
 
     class Meta:
         model = Profile
@@ -50,6 +53,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "linkedin_url",
             "bio",
             "experiences",
+            "selected_tracks",
         ]
 
         # This ensures PATCH requests don't require these fields
