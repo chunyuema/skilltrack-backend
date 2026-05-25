@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from .models import Skill, SkillSubCategory, SkillTheme
+from .models import Skill, SkillSubCategory, SkillTheme, Track
+
+
+class TrackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Track
+        fields = ["id", "name", "track_type"]
+
 
 class SkillSerializer(serializers.ModelSerializer):
     level = serializers.SerializerMethodField()
@@ -29,10 +36,11 @@ class SkillSubCategorySerializer(serializers.ModelSerializer):
 
 
 class SkillThemeSerializer(serializers.ModelSerializer):
+    track = TrackSerializer(read_only=True)
     subCategories = SkillSubCategorySerializer(
         many=True, read_only=True, source="sub_categories"
     )
 
     class Meta:
         model = SkillTheme
-        fields = ["id", "name", "description", "subCategories"]
+        fields = ["id", "name", "description", "track", "subCategories"]
