@@ -6,7 +6,7 @@
 - **Decision:** Use a One-to-Many relationship from `Profile` to `Experience`.
 - **Reasoning:** 
     - A `User` represents the identity and login.
-    - A `Profile` represents the professional persona.
+    - A `Profile` represents the professional persona (including metadata like country, bio, and education).
     - An `Experience` represents a specific job or role.
     - Decoupling `Profile` from `User` allows for future flexibility (e.g., multiple personas for one user).
     - Grouping professional metadata (like experiences) under the `Profile` makes the domain model cleaner.

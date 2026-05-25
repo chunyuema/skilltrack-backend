@@ -39,9 +39,9 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = [
             "first_name",
             "last_name",
-            "title",
             "email",
             "phone",
+            "country",
             "location",
             "education",
             "visa_status",
@@ -56,8 +56,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             field: {"required": False, "allow_blank": True}
             for field in [
-                "title",
                 "phone",
+                "country",
                 "location",
                 "education",
                 "visa_status",

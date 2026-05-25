@@ -37,13 +37,14 @@ class ProfileTests(APITestCase):
         data = {
             "first_name": "Updated",
             "last_name": "User",
-            "title": "Software Engineer",
+            "country": "Germany",
         }
         response = self.client.patch(self.url, data)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["first_name"], "Updated")
         self.assertEqual(response.data["last_name"], "User")
+        self.assertEqual(response.data["country"], "Germany")
 
         # Verify the underlying User object was updated
         self.user.refresh_from_db()

@@ -15,7 +15,7 @@ This document lists the available API endpoints for the SkillTrack backend.
 | Endpoint | Method | Description | Auth Required |
 | :--- | :--- | :--- | :--- |
 | `/api/v1/profiles/me/` | GET | Fetch the current user's profile and nested experiences. | Yes |
-| `/api/v1/profiles/me/` | PUT/PATCH | Update user profile details (title, phone, bio, etc.). | Yes |
+| `/api/v1/profiles/me/` | PUT/PATCH | Update user profile details (country, phone, bio, etc.). | Yes |
 
 ## Work Experience
 
