@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 from skills.models import Track, SkillTheme, SkillSubCategory, Skill
 
 class Command(BaseCommand):
-    help = 'Populates the enriched tiered skills matrix (T-Shaped Engineer)'
+    help = 'Populates the enriched tiered skills matrix and cleans up stale data'
 
     def handle(self, *args, **options):
         # 1. Define Tracks
@@ -16,11 +16,13 @@ class Command(BaseCommand):
             {'id': 'dist-sys', 'name': 'Distributed Systems', 'track_type': 'SPECIAL'},
         ]
 
+        valid_track_ids = []
         for tr_data in tracks_data:
             Track.objects.update_or_create(
                 id=tr_data['id'],
                 defaults={'name': tr_data['name'], 'track_type': tr_data['track_type']}
             )
+            valid_track_ids.append(tr_data['id'])
 
         # 2. Define Themes & Hierarchy Organised by Track
         data = [
@@ -481,7 +483,11 @@ class Command(BaseCommand):
             }
         ]
 
-        # 3. Populate Database
+        # 3. Populate Database and collect valid IDs for cleanup
+        valid_theme_ids = []
+        valid_subcat_ids = []
+        valid_skill_ids = []
+
         for track_group in data:
             track = Track.objects.get(id=track_group['track'])
             for t_idx, t_data in enumerate(track_group['themes']):
@@ -494,15 +500,35 @@ class Command(BaseCommand):
                         'order': t_idx
                     }
                 )
+                valid_theme_ids.append(theme.id)
+
                 for sc_idx, sc_data in enumerate(t_data['subCategories']):
                     subcat, created = SkillSubCategory.objects.update_or_create(
                         id=sc_data['id'],
                         defaults={'theme': theme, 'name': sc_data['name'], 'order': sc_idx}
                     )
+                    valid_subcat_ids.append(subcat.id)
+
                     for s_idx, s_data in enumerate(sc_data['skills']):
-                        Skill.objects.update_or_create(
+                        skill, created = Skill.objects.update_or_create(
                             id=s_data['id'],
                             defaults={'sub_category': subcat, 'name': s_data['name'], 'order': s_idx}
                         )
+                        valid_skill_ids.append(skill.id)
         
-        self.stdout.write(self.style.SUCCESS('Successfully populated enriched tiered skills matrix'))
+        # 4. Cleanup Stale Data
+        self.stdout.write("Cleaning up stale data...")
+        
+        deleted_skills, _ = Skill.objects.exclude(id__in=valid_skill_ids).delete()
+        self.stdout.write(f"Deleted {deleted_skills} stale skills.")
+        
+        deleted_subcats, _ = SkillSubCategory.objects.exclude(id__in=valid_subcat_ids).delete()
+        self.stdout.write(f"Deleted {deleted_subcats} stale sub-categories.")
+        
+        deleted_themes, _ = SkillTheme.objects.exclude(id__in=valid_theme_ids).delete()
+        self.stdout.write(f"Deleted {deleted_themes} stale themes.")
+        
+        deleted_tracks, _ = Track.objects.exclude(id__in=valid_track_ids).delete()
+        self.stdout.write(f"Deleted {deleted_tracks} stale tracks.")
+
+        self.stdout.write(self.style.SUCCESS('Successfully synchronized skills matrix with database.'))

@@ -5,5 +5,5 @@ urlpatterns = [
     path("tracks/", TrackListView.as_view(), name="track-list"),
     path("tracks/update/", UpdateUserTracksView.as_view(), name="update-tracks"),
     path("skill-list/", SkillListView.as_view(), name="skill-list"),
-    path("skills/update/", UpdateUserSkillView.as_view(), name="update-skill"),
+    path("update/", UpdateUserSkillView.as_view(), name="update-skill"),
 ]
