@@ -11,6 +11,6 @@ urlpatterns = [
     path("api/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     # Application endpoints
     path("api/v1/profiles/", include("profiles.urls")),
-    path("api/v1/profiles/", include("skills.urls")),
+    path("api/v1/skills/", include("skills.urls")),
     path("api/register/", RegisterView.as_view(), name="register"),
 ]

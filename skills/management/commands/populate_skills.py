@@ -1,368 +1,534 @@
 from django.core.management.base import BaseCommand
-from skills.models import SkillTheme, SkillSubCategory, Skill
+from skills.models import Track, SkillTheme, SkillSubCategory, Skill
 
 class Command(BaseCommand):
-    help = 'Populates the initial skills matrix'
+    help = 'Populates the enriched tiered skills matrix and cleans up stale data'
 
     def handle(self, *args, **options):
-        themes_data = [
+        # 1. Define Tracks
+        tracks_data = [
+            {'id': 'core', 'name': 'Core Essentials', 'track_type': 'CORE'},
+            {'id': 'frontend', 'name': 'Frontend Engineering', 'track_type': 'DOMAIN'},
+            {'id': 'backend', 'name': 'Backend Engineering', 'track_type': 'DOMAIN'},
+            {'id': 'fullstack', 'name': 'Full-Stack Engineering', 'track_type': 'DOMAIN'},
+            {'id': 'ai-eng', 'name': 'AI Engineering', 'track_type': 'SPECIAL'},
+            {'id': 'hpc', 'name': 'High-Performance Computing', 'track_type': 'SPECIAL'},
+            {'id': 'dist-sys', 'name': 'Distributed Systems', 'track_type': 'SPECIAL'},
+        ]
+
+        valid_track_ids = []
+        for tr_data in tracks_data:
+            Track.objects.update_or_create(
+                id=tr_data['id'],
+                defaults={'name': tr_data['name'], 'track_type': tr_data['track_type']}
+            )
+            valid_track_ids.append(tr_data['id'])
+
+        # 2. Define Themes & Hierarchy Organised by Track
+        data = [
             {
-                'id': 'foundations',
-                'name': 'Low-Level Foundations & Core CS',
-                'description': 'The mechanical "physics" of software before frameworks.',
-                'subCategories': [
+                'track': 'core',
+                'themes': [
                     {
-                        'id': 'arch',
-                        'name': 'Computer Architecture',
-                        'skills': [
-                            {'id': 'cpu-cache', 'name': 'CPU Caching (L1/L2/L3)'},
-                            {'id': 'instruction-sets', 'name': 'Instruction Sets (x86 vs ARM)'},
-                            {'id': 'memory-alignment', 'name': 'Memory Alignment'},
+                        'id': 'vcs-workflows',
+                        'name': 'Version Control & Team Workflows',
+                        'description': 'Universal tools for collaborative development.',
+                        'subCategories': [
+                            {
+                                'id': 'git-fundamentals',
+                                'name': 'Git Fundamentals',
+                                'skills': [
+                                    {'id': 'git-commits', 'name': 'Commits & Branching Strategies'},
+                                    {'id': 'git-merging', 'name': 'Merging Mechanics'},
+                                    {'id': 'git-conflicts', 'name': '3-way Conflict Resolution'},
+                                ]
+                            },
+                            {
+                                'id': 'git-internals',
+                                'name': 'Git Internals',
+                                'skills': [
+                                    {'id': 'git-objects', 'name': '.git Folder (Blobs, Trees, Objects)'},
+                                    {'id': 'git-hashes', 'name': 'Cryptographic Hashes'},
+                                ]
+                            },
+                            {
+                                'id': 'engineering-hygiene',
+                                'name': 'Engineering Hygiene',
+                                'skills': [
+                                    {'id': 'vcs-flows', 'name': 'Trunk-based vs Git Flow'},
+                                    {'id': 'pr-formatting', 'name': 'PR Formatting & Async Review'},
+                                    {'id': 'semver', 'name': 'Semantic Versioning (SemVer)'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'os',
-                        'name': 'Operating Systems',
-                        'skills': [
-                            {'id': 'process-thread', 'name': 'Process vs Thread Mgmt'},
-                            {'id': 'kernel-syscalls', 'name': 'Kernel Syscalls'},
-                            {'id': 'file-systems', 'name': 'File Systems (NTFS/Ext4)'},
-                            {'id': 'io-multiplexing', 'name': 'I/O Multiplexing (epoll/kqueue)'},
+                        'id': 'data-persistence-basics',
+                        'name': 'Data & Persistence Basics',
+                        'description': 'Essential data management for every dev.',
+                        'subCategories': [
+                            {
+                                'id': 'rdbms-foundations',
+                                'name': 'Relational DB Foundations',
+                                'skills': [
+                                    {'id': 'db-crud', 'name': 'Basic CRUD Operations'},
+                                    {'id': 'db-joins', 'name': 'JOIN & Aggregation Queries'},
+                                ]
+                            },
+                            {
+                                'id': 'indexing-acid',
+                                'name': 'Indexing & ACID',
+                                'skills': [
+                                    {'id': 'btree-lookups', 'name': 'B-Tree Lookups'},
+                                    {'id': 'acid-principles', 'name': 'ACID (Data Safety)'},
+                                ]
+                            },
+                            {
+                                'id': 'data-serialization',
+                                'name': 'Data Serialization',
+                                'skills': [
+                                    {'id': 'serialization-formats', 'name': 'JSON / XML'},
+                                    {'id': 'schema-validation', 'name': 'Schema Validation'},
+                                    {'id': 'db-migrations-basic', 'name': 'Basic Schema Migrations'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'networking',
-                        'name': 'Networking (L4–L7)',
-                        'skills': [
-                            {'id': 'transport', 'name': 'Transport (TCP/UDP/QUIC)'},
-                            {'id': 'app-proto', 'name': 'App Protocols (HTTP/3, gRPC)'},
-                            {'id': 'mtls', 'name': 'mTLS & WebSockets'},
-                        ]
-                    },
-                    {
-                        'id': 'data-structures',
-                        'name': 'Data Structures',
-                        'skills': [
-                            {'id': 'b-trees', 'name': 'B-Trees (Databases)'},
-                            {'id': 'bloom-filters', 'name': 'Bloom Filters (Caching)'},
-                            {'id': 'crdts', 'name': 'CRDTs (Collab Editing)'},
+                        'id': 'networking-web-mechanics',
+                        'name': 'Networking & Web Mechanics',
+                        'description': 'How the internet actually works.',
+                        'subCategories': [
+                            {
+                                'id': 'protocols-lifecycle',
+                                'name': 'Protocols & Lifecycle',
+                                'skills': [
+                                    {'id': 'http-methods', 'name': 'HTTP/HTTPS (GET, POST, etc.)'},
+                                    {'id': 'status-codes', 'name': 'Status Codes'},
+                                    {'id': 'dns-resolution', 'name': 'DNS Resolution'},
+                                ]
+                            },
+                            {
+                                'id': 'api-design-core',
+                                'name': 'API Design',
+                                'skills': [
+                                    {'id': 'rest-contract', 'name': 'RESTful Principles'},
+                                    {'id': 'statelessness', 'name': 'Statelessness & Payloads'},
+                                ]
+                            },
+                            {
+                                'id': 'web-security-basics',
+                                'name': 'Web Security Basics',
+                                'skills': [
+                                    {'id': 'cors-csp', 'name': 'CORS & CSP'},
+                                    {'id': 'cookie-security', 'name': 'Cookie & Header Security'},
+                                ]
+                            }
                         ]
                     }
                 ]
             },
             {
-                'id': 'language',
-                'name': 'Language & Runtime Mastery',
-                'description': 'How code behaves under pressure, beyond syntax.',
-                'subCategories': [
+                'track': 'frontend',
+                'themes': [
                     {
-                        'id': 'memory-mgmt',
-                        'name': 'Memory Management',
-                        'skills': [
-                            {'id': 'stack-heap', 'name': 'Stack vs Heap Allocation'},
-                            {'id': 'raii', 'name': 'RAII / Borrow Checking'},
-                            {'id': 'gc-tuning', 'name': 'GC Tuning (JVM/V8)'},
+                        'id': 'core-ui-tech',
+                        'name': 'Core UI Technologies',
+                        'description': 'Modern layouts and styling.',
+                        'subCategories': [
+                            {
+                                'id': 'modern-css',
+                                'name': 'Modern CSS',
+                                'skills': [
+                                    {'id': 'css-layouts', 'name': 'Flexbox, Grid, Subgrid'},
+                                    {'id': 'css-in-js-tailwind', 'name': 'CSS-in-JS & Tailwind'},
+                                    {'id': 'container-queries', 'name': 'Container Queries'},
+                                    {'id': 'html5-semantic', 'name': 'Semantic HTML5'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'type-systems',
-                        'name': 'Type Systems',
-                        'skills': [
-                            {'id': 'static-dynamic', 'name': 'Static vs Dynamic'},
-                            {'id': 'nominal-structural', 'name': 'Nominal vs Structural'},
-                            {'id': 'generics', 'name': 'Generics & Metaprogramming'},
+                        'id': 'js-ts-mastery',
+                        'name': 'JavaScript & TypeScript Mastery',
+                        'description': 'Advanced language features.',
+                        'subCategories': [
+                            {
+                                'id': 'runtime-execution',
+                                'name': 'Runtime & Execution',
+                                'skills': [
+                                    {'id': 'async-event-loop', 'name': 'Async & Event Loop'},
+                                    {'id': 'reactivity-models', 'name': 'DOM vs Signal-based Reactivity'},
+                                ]
+                            },
+                            {
+                                'id': 'ts-abstractions',
+                                'name': 'TypeScript Abstractions',
+                                'skills': [
+                                    {'id': 'ts-generics', 'name': 'Generics & Conditional Types'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'functional',
-                        'name': 'Functional Programming',
-                        'skills': [
-                            {'id': 'immutability', 'name': 'Immutability'},
-                            {'id': 'monads', 'name': 'Monads & Higher-Order Fn'},
-                            {'id': 'lazy-eval', 'name': 'Lazy Evaluation'},
+                        'id': 'architectural-rendering',
+                        'name': 'Architectural Rendering',
+                        'description': 'Modern delivery patterns.',
+                        'subCategories': [
+                            {
+                                'id': 'rendering-strategies',
+                                'name': 'Rendering Strategies',
+                                'skills': [
+                                    {'id': 'ssr-ssg-isr', 'name': 'SSR / SSG / ISR'},
+                                    {'id': 'progressive-hydration', 'name': 'Progressive Hydration'},
+                                    {'id': 'rsc', 'name': 'React Server Components (RSC)'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'compiler',
-                        'name': 'Compiler Basics',
-                        'skills': [
-                            {'id': 'ast', 'name': 'Abstract Syntax Trees (AST)'},
-                            {'id': 'jit', 'name': 'JIT Compilation'},
+                        'id': 'perf-telemetry',
+                        'name': 'Performance & Telemetry',
+                        'description': 'Optimization and monitoring.',
+                        'subCategories': [
+                            {
+                                'id': 'web-vitals',
+                                'name': 'Web Vitals',
+                                'skills': [
+                                    {'id': 'core-web-vitals', 'name': 'INP, LCP, CLS Optimization'},
+                                    {'id': 'crp-tuning', 'name': 'Critical Rendering Path Tuning'},
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'id': 'fe-state-architecture',
+                        'name': 'State Architecture',
+                        'description': 'Managing complex client-side data.',
+                        'subCategories': [
+                            {
+                                'id': 'fe-state-models',
+                                'name': 'State Models',
+                                'skills': [
+                                    {'id': 'atomic-state-jotai', 'name': 'Atomic State (Jotai)'},
+                                    {'id': 'unidirectional-flow', 'name': 'Zustand / Redux'},
+                                    {'id': 'server-cache-query', 'name': 'TanStack / React Query'},
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'id': 'fe-tooling',
+                        'name': 'Frontend Tooling',
+                        'description': 'Development and testing infrastructure.',
+                        'subCategories': [
+                            {
+                                'id': 'bundlers-testing',
+                                'name': 'Bundlers & Testing',
+                                'skills': [
+                                    {'id': 'vite-rspack', 'name': 'Vite / Rspack'},
+                                    {'id': 'component-testing', 'name': 'Vitest / Jest'},
+                                    {'id': 'e2e-playwright', 'name': 'Playwright E2E'},
+                                ]
+                            }
                         ]
                     }
                 ]
             },
             {
-                'id': 'backend',
-                'name': 'Backend & Distributed Systems',
-                'description': 'How services talk to each other and stay alive at scale.',
-                'subCategories': [
+                'track': 'backend',
+                'themes': [
                     {
-                        'id': 'arch-patterns',
-                        'name': 'Architectural Patterns',
-                        'skills': [
-                            {'id': 'microservices', 'name': 'Microservices'},
-                            {'id': 'event-sourcing', 'name': 'Event Sourcing & CQRS'},
-                            {'id': 'hexagonal', 'name': 'Hexagonal Architecture'},
+                        'id': 'be-system-architecture',
+                        'name': 'System Architecture',
+                        'description': 'Patterns for scalable services.',
+                        'subCategories': [
+                            {
+                                'id': 'architectural-patterns-be',
+                                'name': 'Patterns',
+                                'skills': [
+                                    {'id': 'microservices-orch', 'name': 'Microservices Orchestration'},
+                                    {'id': 'ddd', 'name': 'Domain-Driven Design (DDD)'},
+                                    {'id': 'hexagonal-clean', 'name': 'Hexagonal / Clean Architecture'},
+                                    {'id': 'event-driven-async', 'name': 'Event-Driven Design'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'concurrency',
-                        'name': 'Concurrency Models',
-                        'skills': [
-                            {'id': 'actor-model', 'name': 'Actor Model (Erlang/Akka)'},
-                            {'id': 'csp', 'name': 'CSP (Go Channels)'},
-                            {'id': 'event-loops', 'name': 'Event Loops (Node.js)'},
+                        'id': 'advanced-api-paradigms',
+                        'name': 'Advanced API Paradigms',
+                        'description': 'Beyond standard REST.',
+                        'subCategories': [
+                            {
+                                'id': 'api-protocols',
+                                'name': 'Protocols & Schemas',
+                                'skills': [
+                                    {'id': 'grpc-proto', 'name': 'gRPC & Protocol Buffers'},
+                                    {'id': 'graphql-federation', 'name': 'GraphQL Schema Federation'},
+                                ]
+                            },
+                            {
+                                'id': 'real-time-streaming',
+                                'name': 'Real-time & Streaming',
+                                'skills': [
+                                    {'id': 'websockets-sse', 'name': 'WebSockets & SSE'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'consensus',
-                        'name': 'Distributed Consensus',
-                        'skills': [
-                            {'id': 'paxos-raft', 'name': 'Paxos / Raft'},
-                            {'id': 'gossip', 'name': 'Gossip Protocols'},
+                        'id': 'data-tiering-perf',
+                        'name': 'Data Tiering & Performance',
+                        'description': 'High-performance data access.',
+                        'subCategories': [
+                            {
+                                'id': 'caching-pooling',
+                                'name': 'Caching & Pooling',
+                                'skills': [
+                                    {'id': 'distributed-caching', 'name': 'Redis / Memcached'},
+                                    {'id': 'invalidation-strategies', 'name': 'Write-through / Write-behind'},
+                                    {'id': 'connection-pooling', 'name': 'Connection Pooling'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'messaging',
-                        'name': 'Messaging & Streams',
-                        'skills': [
-                            {'id': 'message-queues', 'name': 'Message Queuing (RabbitMQ)'},
-                            {'id': 'event-streaming', 'name': 'Event Streaming (Kafka)'},
-                            {'id': 'cdc', 'name': 'Change Data Capture (CDC)'},
-                        ]
-                    }
-                ]
-            },
-            {
-                'id': 'data',
-                'name': 'Data Engineering & Persistence',
-                'description': 'Managing the most expensive part of any system.',
-                'subCategories': [
-                    {
-                        'id': 'rdbms',
-                        'name': 'Relational DBs',
-                        'skills': [
-                            {'id': 'sql-opt', 'name': 'Deep SQL Optimization'},
-                            {'id': 'acid', 'name': 'ACID & Isolation Levels'},
-                            {'id': 'sharding', 'name': 'Partitioning & Sharding'},
+                        'id': 'iam-control',
+                        'name': 'Identity & Access Control',
+                        'description': 'Security and authorization.',
+                        'subCategories': [
+                            {
+                                'id': 'auth-flows',
+                                'name': 'Auth Flows',
+                                'skills': [
+                                    {'id': 'oauth-oidc-jwt', 'name': 'OAuth 2.0 / OIDC / JWT'},
+                                    {'id': 'rbac-abac-be', 'name': 'RBAC vs ABAC'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'nosql',
-                        'name': 'NoSQL Ecosystem',
-                        'skills': [
-                            {'id': 'document-db', 'name': 'Document (Mongo/Couch)'},
-                            {'id': 'kv-store', 'name': 'Key-Value (Redis/Bitmaps)'},
-                            {'id': 'wide-column', 'name': 'Wide-Column (Cassandra)'},
-                        ]
-                    },
-                    {
-                        'id': 'vector-search',
-                        'name': 'Vector & Search',
-                        'skills': [
-                            {'id': 'vector-db', 'name': 'Vector DBs (HNSW/IVF)'},
-                            {'id': 'search-engines', 'name': 'Inverted Indexes (Elastic)'},
-                        ]
-                    }
-                ]
-            },
-            {
-                'id': 'frontend',
-                'name': 'Frontend & Client-Side',
-                'description': 'Distributed systems running in a browser.',
-                'subCategories': [
-                    {
-                        'id': 'rendering',
-                        'name': 'Rendering Patterns',
-                        'skills': [
-                            {'id': 'ssr-ssg', 'name': 'SSR / SSG / ISR'},
-                            {'id': 'hydration', 'name': 'Partial Hydration'},
-                        ]
-                    },
-                    {
-                        'id': 'browser',
-                        'name': 'Browser Internals',
-                        'skills': [
-                            {'id': 'crp', 'name': 'Critical Rendering Path'},
-                            {'id': 'v8-opt', 'name': 'V8 Engine Optimization'},
-                            {'id': 'web-workers', 'name': 'Web Workers'},
-                        ]
-                    },
-                    {
-                        'id': 'wasm',
-                        'name': 'WebAssembly',
-                        'skills': [
-                            {'id': 'wasm-rust', 'name': 'Wasm (Rust/C++)'},
-                        ]
-                    },
-                    {
-                        'id': 'state',
-                        'name': 'State Management',
-                        'skills': [
-                            {'id': 'atomic-state', 'name': 'Atomic (Recoil/Jotai)'},
-                            {'id': 'flux', 'name': 'Flux (Redux)'},
-                            {'id': 'server-state', 'name': 'Server State (React Query)'},
-                        ]
-                    }
-                ]
-            },
-            {
-                'id': 'cloud',
-                'name': 'Cloud & Infrastructure',
-                'description': 'Owning the environment.',
-                'subCategories': [
-                    {
-                        'id': 'containers',
-                        'name': 'Containerization',
-                        'skills': [
-                            {'id': 'oci', 'name': 'OCI Images & Multi-stage'},
-                            {'id': 'runtimes', 'name': 'Runtimes (containerd)'},
-                        ]
-                    },
-                    {
-                        'id': 'orchestration',
-                        'name': 'Orchestration',
-                        'skills': [
-                            {'id': 'k8s', 'name': 'Kubernetes (CRDs/Operators)'},
-                            {'id': 'service-mesh', 'name': 'Service Mesh (Istio)'},
-                        ]
-                    },
-                    {
-                        'id': 'serverless',
-                        'name': 'Serverless',
-                        'skills': [
-                            {'id': 'faas', 'name': 'FaaS (Lambda)'},
-                            {'id': 'edge', 'name': 'Edge Computing (Workers)'},
-                        ]
-                    },
-                    {
-                        'id': 'iac',
-                        'name': 'Infrastructure as Code',
-                        'skills': [
-                            {'id': 'terraform', 'name': 'Declarative (Terraform)'},
-                            {'id': 'pulumi', 'name': 'Imperative (Pulumi/CDK)'},
-                        ]
-                    }
-                ]
-            },
-            {
-                'id': 'security',
-                'name': 'Security (Shift-Left)',
-                'description': 'Security as a technical requirement.',
-                'subCategories': [
-                    {
-                        'id': 'iam',
-                        'name': 'Identity & Access',
-                        'skills': [
-                            {'id': 'oauth-oidc', 'name': 'OAuth2 / OIDC / SAML'},
-                            {'id': 'rbac-abac', 'name': 'RBAC / ABAC'},
-                        ]
-                    },
-                    {
-                        'id': 'app-sec',
+                        'id': 'be-app-sec',
                         'name': 'Application Security',
-                        'skills': [
-                            {'id': 'owasp', 'name': 'Injection/XSS/CSRF/SSRF'},
-                        ]
-                    },
-                    {
-                        'id': 'crypto',
-                        'name': 'Cryptography',
-                        'skills': [
-                            {'id': 'hashing', 'name': 'Hashing (Argon2)'},
-                            {'id': 'encryption', 'name': 'Sym/Asymmetric Encryption'},
-                            {'id': 'zkp', 'name': 'Zero-Knowledge Proofs'},
-                        ]
-                    },
-                    {
-                        'id': 'supply-chain',
-                        'name': 'Supply Chain',
-                        'skills': [
-                            {'id': 'sbom', 'name': 'SBOM & Vuln Scanning'},
+                        'description': 'Securing the backend.',
+                        'subCategories': [
+                            {
+                                'id': 'owasp-mitigation',
+                                'name': 'OWASP Mitigation',
+                                'skills': [
+                                    {'id': 'sql-injection-ssrf', 'name': 'SQLi, SSRF, BOLA Mitigation'},
+                                ]
+                            }
                         ]
                     }
                 ]
             },
             {
-                'id': 'quality',
-                'name': 'Quality & Observability',
-                'description': 'Keeping the system green.',
-                'subCategories': [
+                'track': 'hpc',
+                'themes': [
                     {
-                        'id': 'testing',
-                        'name': 'Testing Strategy',
-                        'skills': [
-                            {'id': 'prop-testing', 'name': 'Property-based Testing'},
-                            {'id': 'chaos', 'name': 'Chaos Engineering'},
-                            {'id': 'load-test', 'name': 'Load/Stress (k6)'},
+                        'id': 'hardware-perf',
+                        'name': 'Hardware-Level Performance',
+                        'description': 'Optimizing for the metal.',
+                        'subCategories': [
+                            {
+                                'id': 'cpu-memory-opt',
+                                'name': 'CPU & Memory',
+                                'skills': [
+                                    {'id': 'cache-line-opt', 'name': 'L1/L2/L3 Cache Line & False Sharing'},
+                                    {'id': 'simd-vectorization', 'name': 'SIMD Vectorization'},
+                                    {'id': 'memory-alignment-padding', 'name': 'Alignment & Struct Padding'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'observability',
-                        'name': 'Observability Pillars',
-                        'skills': [
-                            {'id': 'logs', 'name': 'Logs (ELK/Loki)'},
-                            {'id': 'metrics', 'name': 'Metrics (Prometheus)'},
-                            {'id': 'traces', 'name': 'Tracing (Jaeger)'},
+                        'id': 'concurrency-mechanics',
+                        'name': 'Concurrency Mechanics',
+                        'description': 'Low-level thread management.',
+                        'subCategories': [
+                            {
+                                'id': 'low-level-sync',
+                                'name': 'Low-level Sync',
+                                'skills': [
+                                    {'id': 'lock-free-ds', 'name': 'Lock-free Data Structures'},
+                                    {'id': 'atomic-primitives', 'name': 'Atomic Primitives'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'sre',
-                        'name': 'SRE Principles',
-                        'skills': [
-                            {'id': 'slis-slos', 'name': 'Error Budgets & SLOs'},
+                        'id': 'compilation-infra',
+                        'name': 'Compilation Infrastructure',
+                        'description': 'Language and compiler internals.',
+                        'subCategories': [
+                            {
+                                'id': 'compiler-internals',
+                                'name': 'Compiler Internals',
+                                'skills': [
+                                    {'id': 'ast-manipulation', 'name': 'AST Manipulation'},
+                                    {'id': 'custom-jit', 'name': 'Custom JIT Logic'},
+                                    {'id': 'llvm-ir-opt', 'name': 'LLVM IR Optimization'},
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'id': 'hpc-profiling',
+                        'name': 'Profiling Systems',
+                        'description': 'Deep performance analysis.',
+                        'subCategories': [
+                            {
+                                'id': 'deep-tracing',
+                                'name': 'Tracing & Analysis',
+                                'skills': [
+                                    {'id': 'hardware-tracing', 'name': 'Hardware Tracing'},
+                                    {'id': 'ebpf-analysis', 'name': 'eBPF Kernel Analysis'},
+                                ]
+                            }
                         ]
                     }
                 ]
             },
             {
-                'id': 'ai',
-                'name': 'AI Engineering',
-                'description': 'Integrating machine intelligence.',
-                'subCategories': [
+                'track': 'dist-sys',
+                'themes': [
                     {
-                        'id': 'llm-ops',
-                        'name': 'LLM Orchestration',
-                        'skills': [
-                            {'id': 'langchain', 'name': 'LangChain/LlamaIndex'},
-                            {'id': 'prompt-eng', 'name': 'Technical Prompt Eng'},
+                        'id': 'fault-tolerant-consensus',
+                        'name': 'Fault-Tolerant Consensus',
+                        'description': 'Coordination at scale.',
+                        'subCategories': [
+                            {
+                                'id': 'consensus-protocols',
+                                'name': 'Protocols',
+                                'skills': [
+                                    {'id': 'paxos-multi', 'name': 'Multi-Paxos'},
+                                    {'id': 'raft-mechanics', 'name': 'Raft Leader & Replication'},
+                                    {'id': 'pbft', 'name': 'Practical Byzantine Fault Tolerance'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'rag',
-                        'name': 'RAG Pipelines',
-                        'skills': [
-                            {'id': 'chunking', 'name': 'Chunking & Embeddings'},
-                            {'id': 'semantic', 'name': 'Semantic Search'},
+                        'id': 'dist-storage-mechanics',
+                        'name': 'Distributed Storage Mechanics',
+                        'description': 'Managing data across nodes.',
+                        'subCategories': [
+                            {
+                                'id': 'sharding-hashing',
+                                'name': 'Sharding & Hashing',
+                                'skills': [
+                                    {'id': 'cap-pacelc', 'name': 'PACELC / CAP Theorem'},
+                                    {'id': 'dynamic-sharding', 'name': 'Dynamic Database Sharding'},
+                                    {'id': 'consistent-hashing', 'name': 'Consistent Hashing Algorithms'},
+                                ]
+                            }
                         ]
                     },
                     {
-                        'id': 'deployment',
-                        'name': 'Model Deployment',
-                        'skills': [
-                            {'id': 'quantization', 'name': 'Quantization'},
-                            {'id': 'api-opt', 'name': 'API Optimization'},
+                        'id': 'high-throughput-streams',
+                        'name': 'High-Throughput Streams',
+                        'description': 'Messaging and event pipelines.',
+                        'subCategories': [
+                            {
+                                'id': 'event-log-systems',
+                                'name': 'Event Logs',
+                                'skills': [
+                                    {'id': 'kafka-partitioning', 'name': 'Kafka Partition Rebalancing'},
+                                    {'id': 'cdc-pipelines', 'name': 'CDC Pipelines'},
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                'track': 'ai-eng',
+                'themes': [
+                    {
+                        'id': 'context-augmentation-rag',
+                        'name': 'Context Augmentation (RAG)',
+                        'description': 'Knowledge retrieval for AI.',
+                        'subCategories': [
+                            {
+                                'id': 'rag-tuning',
+                                'name': 'Retrieval Tuning',
+                                'skills': [
+                                    {'id': 'vector-embeddings-selection', 'name': 'Embedding Selection'},
+                                    {'id': 'hnsw-ivf-pq', 'name': 'HNSW & IVF-PQ Parameters'},
+                                    {'id': 'hierarchical-chunking', 'name': 'Document Hierarchical Chunking'},
+                                    {'id': 'cross-encoder-reranking', 'name': 'Cross-Encoder Reranking'},
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        'id': 'agentic-ai-arch',
+                        'name': 'Agentic AI Architectures',
+                        'description': 'Autonomous AI systems.',
+                        'subCategories': [
+                            {
+                                'id': 'agents-evaluation',
+                                'name': 'Agents & Eval',
+                                'skills': [
+                                    {'id': 'function-calling', 'name': 'Function Calling Mechanics'},
+                                    {'id': 'langgraph-loops', 'name': 'LangGraph State Loops'},
+                                    {'id': 'llm-judge-ragas', 'name': 'LLM-as-a-judge (Ragas)'},
+                                ]
+                            }
                         ]
                     }
                 ]
             }
         ]
 
-        for t_idx, t_data in enumerate(themes_data):
-            theme, created = SkillTheme.objects.update_or_create(
-                id=t_data['id'],
-                defaults={'name': t_data['name'], 'description': t_data['description'], 'order': t_idx}
-            )
-            for sc_idx, sc_data in enumerate(t_data['subCategories']):
-                subcat, created = SkillSubCategory.objects.update_or_create(
-                    id=sc_data['id'],
-                    defaults={'theme': theme, 'name': sc_data['name'], 'order': sc_idx}
+        # 3. Populate Database and collect valid IDs for cleanup
+        valid_theme_ids = []
+        valid_subcat_ids = []
+        valid_skill_ids = []
+
+        for track_group in data:
+            track = Track.objects.get(id=track_group['track'])
+            for t_idx, t_data in enumerate(track_group['themes']):
+                theme, created = SkillTheme.objects.update_or_create(
+                    id=t_data['id'],
+                    defaults={
+                        'track': track,
+                        'name': t_data['name'],
+                        'description': t_data['description'],
+                        'order': t_idx
+                    }
                 )
-                for s_idx, s_data in enumerate(sc_data['skills']):
-                    Skill.objects.update_or_create(
-                        id=s_data['id'],
-                        defaults={'sub_category': subcat, 'name': s_data['name'], 'order': s_idx}
+                valid_theme_ids.append(theme.id)
+
+                for sc_idx, sc_data in enumerate(t_data['subCategories']):
+                    subcat, created = SkillSubCategory.objects.update_or_create(
+                        id=sc_data['id'],
+                        defaults={'theme': theme, 'name': sc_data['name'], 'order': sc_idx}
                     )
+                    valid_subcat_ids.append(subcat.id)
+
+                    for s_idx, s_data in enumerate(sc_data['skills']):
+                        skill, created = Skill.objects.update_or_create(
+                            id=s_data['id'],
+                            defaults={'sub_category': subcat, 'name': s_data['name'], 'order': s_idx}
+                        )
+                        valid_skill_ids.append(skill.id)
         
-        self.stdout.write(self.style.SUCCESS('Successfully populated skills matrix'))
+        # 4. Cleanup Stale Data
+        self.stdout.write("Cleaning up stale data...")
+        
+        deleted_skills, _ = Skill.objects.exclude(id__in=valid_skill_ids).delete()
+        self.stdout.write(f"Deleted {deleted_skills} stale skills.")
+        
+        deleted_subcats, _ = SkillSubCategory.objects.exclude(id__in=valid_subcat_ids).delete()
+        self.stdout.write(f"Deleted {deleted_subcats} stale sub-categories.")
+        
+        deleted_themes, _ = SkillTheme.objects.exclude(id__in=valid_theme_ids).delete()
+        self.stdout.write(f"Deleted {deleted_themes} stale themes.")
+        
+        deleted_tracks, _ = Track.objects.exclude(id__in=valid_track_ids).delete()
+        self.stdout.write(f"Deleted {deleted_tracks} stale tracks.")
+
+        self.stdout.write(self.style.SUCCESS('Successfully synchronized skills matrix with database.'))

@@ -15,6 +15,9 @@ class Profile(models.Model):
     github_url = models.URLField(blank=True)
     linkedin_url = models.URLField(blank=True)
     bio = models.TextField(blank=True)
+    selected_tracks = models.ManyToManyField(
+        "skills.Track", blank=True, related_name="profiles"
+    )
 
     def __str__(self):
         if self.user:
