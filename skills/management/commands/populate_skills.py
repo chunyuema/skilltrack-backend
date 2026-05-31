@@ -38,9 +38,9 @@ class Command(BaseCommand):
                                 'id': 'git-fundamentals',
                                 'name': 'Git Fundamentals',
                                 'skills': [
-                                    {'id': 'git-commits', 'name': 'Commits & Branching Strategies'},
-                                    {'id': 'git-merging', 'name': 'Merging Mechanics'},
-                                    {'id': 'git-conflicts', 'name': '3-way Conflict Resolution'},
+                                    {'id': 'git-commits', 'name': 'Commits & Branching Strategies', 'description': 'Mastery of atomic commits, meaningful commit messages, and the use of feature branches to isolate development.'},
+                                    {'id': 'git-merging', 'name': 'Merging Mechanics', 'description': 'Understanding the difference between fast-forward, recursive merges, and squashing to maintain a clean project history.'},
+                                    {'id': 'git-conflicts', 'name': '3-way Conflict Resolution', 'description': 'Techniques for identifying and resolving code conflicts using base, local, and remote file versions.'},
                                 ]
                             },
                             {
@@ -71,8 +71,8 @@ class Command(BaseCommand):
                                 'id': 'rdbms-foundations',
                                 'name': 'Relational DB Foundations',
                                 'skills': [
-                                    {'id': 'db-crud', 'name': 'Basic CRUD Operations'},
-                                    {'id': 'db-joins', 'name': 'JOIN & Aggregation Queries'},
+                                    {'id': 'db-crud', 'name': 'Basic CRUD Operations', 'description': 'Proficiency in SELECT, INSERT, UPDATE, and DELETE statements within relational database management systems.'},
+                                    {'id': 'db-joins', 'name': 'JOIN & Aggregation Queries', 'description': 'Implementing complex relational logic using INNER, LEFT, RIGHT, and FULL outer joins along with GROUP BY aggregations.'},
                                 ]
                             },
                             {
@@ -103,9 +103,9 @@ class Command(BaseCommand):
                                 'id': 'protocols-lifecycle',
                                 'name': 'Protocols & Lifecycle',
                                 'skills': [
-                                    {'id': 'http-methods', 'name': 'HTTP/HTTPS (GET, POST, etc.)'},
-                                    {'id': 'status-codes', 'name': 'Status Codes'},
-                                    {'id': 'dns-resolution', 'name': 'DNS Resolution'},
+                                    {'id': 'http-methods', 'name': 'HTTP/HTTPS (GET, POST, etc.)', 'description': 'Deep understanding of HTTP verb semantics, statelessness, and the transition from HTTP/1.1 to modern HTTP/2 and 3.'},
+                                    {'id': 'status-codes', 'name': 'Status Codes', 'description': 'The standard grammar of the web: handling 2xx (Success), 3xx (Redirect), 4xx (Client Error), and 5xx (Server Error) responses.'},
+                                    {'id': 'dns-resolution', 'name': 'DNS Resolution', 'description': 'How human-readable domain names are translated into machine-readable IP addresses across the global name server hierarchy.'},
                                 ]
                             },
                             {
